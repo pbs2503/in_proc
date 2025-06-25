@@ -33,8 +33,6 @@ public class TscDataController {
         logger.info("Received TSC data from: {} with type: {}", tscId, request.getType());
 
         try {
-            byte[] rawData = HexConverter.hexStringToByteArray(request.getData());
-
             // 타입에 따른 비동기 처리 시작
             processingFacade.processAsync(tscId, request);
 

@@ -3,6 +3,8 @@ package com.bspark.in_proc.domain.service;
 
 import com.bspark.in_proc.domain.model.TscData;
 import com.bspark.in_proc.infrastructure.converter.standard.StandardDetector;
+import com.bspark.in_proc.infrastructure.converter.tsc.builder.DetectorInfoJsonBuilder;
+import com.bspark.in_proc.infrastructure.converter.tsc.builder.PhaseInfoJsonBuilder;
 import com.bspark.in_proc.infrastructure.converter.tsc.parser.DetectorInfoParser;
 import com.bspark.in_proc.infrastructure.converter.tsc.parser.PhaseInfoParser;
 import com.bspark.in_proc.infrastructure.converter.tsc.parser.TscStatusParser;
@@ -28,25 +30,30 @@ public class TscDataProcessor {
     private final TscStatusParser statusParser;
     private final DetectorInfoParser detectorInfoParser;
     private final PhaseInfoParser phaseInfoParser;
-    private final IntersectionStatusJsonBuilder jsonBuilder;
+    private final IntersectionStatusJsonBuilder intersectionStatusJsonBuilder;
+    private final DetectorInfoJsonBuilder detectorInfoJsonBuilder;
     private final DataValidationService validationService;
     private final TscProcessingProperties properties;
+    private final PhaseInfoJsonBuilder phaseInfoJsonBuilder;
 
     @Autowired
     public TscDataProcessor(StandardDetector standardDetector,
                             TscStatusParser statusParser,
                             DetectorInfoParser detectorInfoParser,
                             PhaseInfoParser phaseInfoParser,
-                            IntersectionStatusJsonBuilder jsonBuilder,
+                            IntersectionStatusJsonBuilder intersectionStatusJsonBuilder,
+                            DetectorInfoJsonBuilder detectorInfoJsonBuilder,
                             DataValidationService validationService,
-                            TscProcessingProperties properties) {
+                            TscProcessingProperties properties, PhaseInfoJsonBuilder phaseInfoJsonBuilder) {
         this.standardDetector = standardDetector;
         this.statusParser = statusParser;
         this.detectorInfoParser = detectorInfoParser;
         this.phaseInfoParser = phaseInfoParser;
-        this.jsonBuilder = jsonBuilder;
+        this.intersectionStatusJsonBuilder = intersectionStatusJsonBuilder;
+        this.detectorInfoJsonBuilder = detectorInfoJsonBuilder;
         this.validationService = validationService;
         this.properties = properties;
+        this.phaseInfoJsonBuilder = phaseInfoJsonBuilder;
     }
 
     public TscData process(String tscId, byte[] rawData, String messageType) {
@@ -92,23 +99,21 @@ public class TscDataProcessor {
         return switch (messageType) {
             case "INTERSECTION_STATUS" -> {
                 var statusData = statusParser.parse(rawData, standard);
-                JSONObject json = jsonBuilder.buildJson(tscId, standard, statusData);
+                JSONObject json = intersectionStatusJsonBuilder.buildJson(tscId, standard, statusData);
                 logger.debug("INTERSECTION_STATUS processing completed for TSC: {}", tscId);
                 yield json.toJSONString();
             }
             case "DETECTOR_INFO" -> {
                 var detectorData = detectorInfoParser.parse(rawData, standard);
+                JSONObject json = detectorInfoJsonBuilder.buildJson(tscId, standard, detectorData);
                 logger.debug("DETECTOR_INFO processing completed for TSC: {}", tscId);
-                // 일단 간단한 JSON 생성
-                yield String.format("{\"tscId\":\"%s\",\"type\":\"DETECTOR_INFO\",\"standard\":%d,\"timestamp\":%d}",
-                        tscId, standard, System.currentTimeMillis());
+                yield json.toJSONString();
             }
             case "PHASE_INFO" -> {
                 var phaseData = phaseInfoParser.parse(rawData, standard);
+                JSONObject json = phaseInfoJsonBuilder.buildJson(tscId, standard, phaseData);
                 logger.debug("PHASE_INFO processing completed for TSC: {}", tscId);
-                // 일단 간단한 JSON 생성
-                yield String.format("{\"tscId\":\"%s\",\"type\":\"PHASE_INFO\",\"standard\":%d,\"timestamp\":%d}",
-                        tscId, standard, System.currentTimeMillis());
+                yield json.toJSONString();
             }
             default -> throw new IllegalArgumentException("Unsupported message type: " + messageType);
         };

@@ -31,7 +31,7 @@ public class IntersectionStatusJsonBuilder {
     }
 
     public JSONObject buildJson(String tsc, int standard, TscStatusData statusData) {
-        logger.debug("Building TSC Status JSON for TSC: {} with standard R{}", tsc, standard);
+        logger.debug("Building Intersection Status JSON for TSC: {} with standard R{}", tsc, standard);
 
         try {
             // 기본 검증
@@ -47,12 +47,12 @@ public class IntersectionStatusJsonBuilder {
             json.put("control", buildControlSection(dataField));
             json.put("panel", buildPanelSection(dataField));
 
-            logger.debug("Successfully built TSC Status JSON for TSC: {}", tsc);
+            logger.debug("Successfully built Intersection Status JSON for TSC: {}", tsc);
             return json;
 
         } catch (Exception e) {
-            logger.error("Failed to build TSC Status JSON for TSC: {}", tsc, e);
-            throw new DataProcessingException("Failed to build TSC Status JSON for TSC: " + tsc, e);
+            logger.error("Failed to build Intersection Status JSON for TSC: {}", tsc, e);
+            throw new DataProcessingException("Failed to build Intersection Status JSON for TSC: " + tsc, e);
         }
     }
 
